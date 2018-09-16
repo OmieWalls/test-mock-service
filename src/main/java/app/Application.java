@@ -12,4 +12,16 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
+//    @Bean
+//    public PubSubInboundChannelAdapter messageChannelAdapter(
+//            @Qualifier("pubsubInputChannel") MessageChannel inputChannel,
+//            PubSubOperations pubSubTemplate) {
+//        PubSubInboundChannelAdapter adapter =
+//                new PubSubInboundChannelAdapter(pubSubTemplate, "testSubscription");
+//        adapter.setOutputChannel(inputChannel);
+//        adapter.setAckMode(AckMode.MANUAL);
+//
+//        return adapter;
+//    }
+
 }
