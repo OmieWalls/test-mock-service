@@ -2,6 +2,11 @@
 
 ## Get Started (incomplete)
 
+- Create a project in GCP.
+- Create a service account key.
+- Save the key (json file) somewhere useful.
+- export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/key.json
+- export GCP_PROJECT_ID=your-project-name
 - `mvn install`
 - `mvn spring-boot:run`
 
