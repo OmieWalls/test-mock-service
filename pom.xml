@@ -33,17 +33,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-gcp-pubsub</artifactId>
-            <version>1.0.0.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-gcp-pubsub</artifactId>
-            <version>1.0.0.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-gcp-pubsub</artifactId>
+            <artifactId>spring-cloud-gcp-storage</artifactId>
             <version>1.0.0.RELEASE</version>
         </dependency>
     </dependencies>
@@ -120,8 +110,8 @@
             <!--<url>https://repo.spring.io/milestone</url>-->
         <!--</repository>-->
 
-        <!--This did not work; Spring.io suggested it to be added
-        for use with the GCP beta integrations... Will research on this.-->
+        <!--Spring.io suggested it to be added
+        for use with the GCP beta integrations instead of the one above... Will research on this.-->
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
