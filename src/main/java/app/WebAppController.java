@@ -25,12 +25,7 @@ public class WebAppController {
         var restTemplate = new RestTemplate();
         ResponseEntity<List> responseEntity = restTemplate.getForEntity("https://my.api.mockaroo.com/us-companies.json?key=e68417c0", List.class);
         List<LinkedHashMap<String, Object>> usCompanies = responseEntity.getBody();
-        Storage storage = StorageOptions.getDefaultInstance().getService();
 
-        Page<Bucket> buckets = storage.list();
-        for (Bucket bucket : buckets.iterateAll()) {
-            System.out.println(bucket.toString());
-        }
         var ps = new PubSubController();
         ps.publishMessage(usCompanies);
         return usCompanies;
