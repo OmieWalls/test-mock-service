@@ -36,7 +36,7 @@ public class PubSubController {
             }
 
         } catch (IOException e) {
-            log.debug("Pub/Sub Publishing Error: " + e.getMessage());
+            log.error("Pub/Sub Publishing Error: " + e.getMessage());
 
         } finally {
             if (publisher != null) {
@@ -44,7 +44,7 @@ public class PubSubController {
                 try {
                     publisher.shutdown();
                 } catch (Exception e) {
-                    log.debug("Pub/Sub Shutdown Error: " + e.getMessage());
+                    log.error("Pub/Sub Shutdown Error: " + e.getMessage());
                 }
             }
         }
@@ -77,12 +77,12 @@ public class PubSubController {
                     log.debug(String.valueOf(apiException.getStatusCode().getCode()));
                     log.debug(String.valueOf(apiException.isRetryable()));
                 }
-                System.out.println("Error publishing message : " + message);
+                log.error("Error publishing message : " + message);
             }
 
             @Override
             public void onSuccess(Object o) {
-                System.out.println(o.toString());
+                log.debug(o.toString());
             }
         };
     }
