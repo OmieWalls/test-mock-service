@@ -5,6 +5,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -21,9 +22,9 @@ public class PubSubController {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    public void publishGeneratedData(List<LinkedHashMap<String, Object>> messages) {
+    public void publishGeneratedData(List<LinkedHashMap<String, Object>> messages, String topic, String projectId) {
 
-        ProjectTopicName topicName = ProjectTopicName.of(System.getenv("GCP_PROJECT_ID"), "Generated");
+        ProjectTopicName topicName = ProjectTopicName.of(projectId, topic);
         Publisher publisher = null;
 
         try {
@@ -31,8 +32,8 @@ public class PubSubController {
             publisher = Publisher.newBuilder(topicName).build();
 
             for (final Map<String, Object> message : messages) {
-                var jsonMap = UtilController.linkedHashMapToJSON(message);
-                publishData(jsonMap, publisher);
+                var jsonMessage = UtilController.linkedHashMapToJSON(message);
+                publishData(jsonMessage, publisher, topic, projectId);
             }
 
         } catch (IOException e) {
@@ -50,7 +51,7 @@ public class PubSubController {
         }
     }
 
-    private void publishData(String message, Publisher publisher) {
+    private void publishData(String message, Publisher publisher, String topic, String projectId) {
 
         ByteString data = ByteString.copyFromUtf8(message);
         PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
@@ -59,11 +60,11 @@ public class PubSubController {
         ApiFuture<String> future = publisher.publish(pubsubMessage);
 
         // Add an asynchronous callback to handle success / failure
-        ApiFutures.addCallback(future, futureCallback(message));
+        ApiFutures.addCallback(future, futureCallback(message, topic, projectId));
     }
 
 
-    private ApiFutureCallback futureCallback(String message) {
+    private ApiFutureCallback futureCallback(String message, String topic, String projectId) {
 
         return new ApiFutureCallback<>() {
 
@@ -74,10 +75,25 @@ public class PubSubController {
                     ApiException apiException = ((ApiException) throwable);
 
                     // details on the API exception
-                    log.debug(String.valueOf(apiException.getStatusCode().getCode()));
-                    log.debug(String.valueOf(apiException.isRetryable()));
+                    var errorCode = String.valueOf(apiException.getStatusCode().getCode());
+
+                    // creates new publisher with the topic that is not found
+                    if (errorCode.equalsIgnoreCase("NOT_FOUND")) {
+                        Publisher newPublisher = createNewPublisherWithTopic(topic, projectId);
+
+                        // retries the message publishing
+                        if (newPublisher != null) {
+                            publishData(message, newPublisher, topic, projectId);
+                        }
+                        log.debug("Topic was not found. One has been created for " + topic +
+                                  " and an attempt to retry the message has been performed.");
+                    } else {
+                        log.error(errorCode);
+                        log.error(String.valueOf(apiException.isRetryable()));
+                        log.error("Error publishing message : " + message);
+                    }
                 }
-                log.error("Error publishing message : " + message);
+
             }
 
             @Override
@@ -85,5 +101,35 @@ public class PubSubController {
                 log.debug(o.toString());
             }
         };
+    }
+
+    private Publisher createNewPublisherWithTopic(String topic, String projectId) {
+        Publisher publisher = null;
+        try {
+            // creates topic in Pub/Sub for the new publisher
+            createTopic(topic, projectId);
+            ProjectTopicName topicName = ProjectTopicName.of(projectId, topic);
+
+            // creates publisher with new topic
+            publisher = Publisher.newBuilder(topicName).build();
+            return publisher;
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        return publisher;
+    }
+
+    private void createTopic(String topicId, String projectId) throws IOException {
+        // Create a new topic
+        ProjectTopicName topic = ProjectTopicName.of(projectId, topicId);
+        try (TopicAdminClient topicAdminClient = TopicAdminClient.create()) {
+            topicAdminClient.createTopic(topic);
+        } catch (ApiException e) {
+            // example : code = ALREADY_EXISTS(409) implies topic already exists
+            log.error("Error thrown while creating new topic. Topic = " + topicId + " code = " + e.getStatusCode().getCode());
+            log.error("Is Retryable? = " + e.isRetryable());
+        }
+
+        System.out.printf("Topic %s:%s created.\n", topic.getProject(), topic.getTopic());
     }
 }
