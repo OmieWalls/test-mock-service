@@ -1,0 +1,9 @@
+---
+applications:
+- name: test-mock-service
+  memory: 1024M
+  path: target/gs-spring-cloud-gcp-0.1.0.jar
+  instances: 1
+  buildpack: https://github.com/cloudfoundry/java-buildpack.git#v4.8
+  env:
+    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 10.0.+ } }'
